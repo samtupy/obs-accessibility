@@ -17,22 +17,24 @@
 */
 
 #pragma once
+#include <miniaudio.h>
+#include <obs.h>
+#include <util/threading.h>
+#include <util/platform.h>
+#include <memory>
+#include <string>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// Defines custom data required for our event audio delivery and configuration source to function.
+struct event_source_data {
+	bool global_events;
+	bool initialized_thread;
+	pthread_t thread;
+	os_event_t *event;
+	obs_source_t *source;
+	std::unique_ptr<ma_engine> engine;
+};
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-
-extern const char *PLUGIN_NAME;
-extern const char *PLUGIN_VERSION;
-
-void obs_log(int log_level, const char *format, ...);
-extern void blogva(int log_level, const char *format, va_list args);
-
-#ifdef __cplusplus
-}
-#endif
+bool init_audio(obs_data_t* settings = nullptr);
+void shutdown_audio();
+bool play(const std::string& earcon);
+event_source_data* get_audio_event_source();

@@ -17,22 +17,9 @@
 */
 
 #pragma once
+#include <string>
+#include <obs-frontend-api.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-
-extern const char *PLUGIN_NAME;
-extern const char *PLUGIN_VERSION;
-
-void obs_log(int log_level, const char *format, ...);
-extern void blogva(int log_level, const char *format, va_list args);
-
-#ifdef __cplusplus
-}
-#endif
+std::string _t(const std::string& string_id);
+std::string _t(const std::string& string_id, const calldata_t* calldata);
+std::string obs_frontend_event_id(obs_frontend_event event);

@@ -17,22 +17,7 @@
 */
 
 #pragma once
+#include <obs-data.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-
-extern const char *PLUGIN_NAME;
-extern const char *PLUGIN_VERSION;
-
-void obs_log(int log_level, const char *format, ...);
-extern void blogva(int log_level, const char *format, va_list args);
-
-#ifdef __cplusplus
-}
-#endif
+bool save_config(); // Call once when app begins to exit, before shutdown_audio().
+obs_data_t* load_config(); // Call once on module load and pass return value to init_audio().

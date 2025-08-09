@@ -7,6 +7,7 @@
 !/cmake
 !/data
 !/src
+!/vcpkg
 !.clang-format
 !.gersemirc
 !.gitignore
