@@ -22,6 +22,7 @@
 	#include <UniversalSpeech.h>
 	#include <obs-module.h>
 	#include <filesystem>
+	#include <QTCore/QString>
 #endif
 #include "speech.h"
 
@@ -42,7 +43,7 @@ bool init_speech() {
 bool speak(const string& text, bool interrupt) {
 	if (!init_speech()) return false;
 	#ifdef _WIN32
-		return speechSayA(text.c_str(), interrupt);
+		return speechSay(QString::fromUtf8(text.c_str(), text.size()).toStdWString().c_str(), interrupt);
 	#else
 		return false;
 	#endif

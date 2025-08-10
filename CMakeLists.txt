@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.28...3.30)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/bin/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
 set(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 if(WIN32)
@@ -8,8 +9,6 @@ elseif(APPLE)
 else()
 	set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING "Vcpkg triplet")
 endif()
-set(CMAKE_VCPKG_PREFIX_PATH ${CMAKE_PREFIX_PATH})
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCOPE)
 
 project(${_name} VERSION ${_version})
 
@@ -19,7 +18,7 @@ option(ENABLE_QT "Use Qt functionality" OFF)
 include(compilerconfig)
 include(defaults)
 include(helpers)
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/.deps/cmake")
+list(APPEND CMAKE_VCPKG_PREFIX_PATH ${CMAKE_PREFIX_PATH})
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
