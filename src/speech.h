@@ -20,3 +20,4 @@
 #include <string>
 
 bool speak(const std::string& text, bool interrupt = true);
+bool speak(const std::wstring& text, bool interrupt = true);

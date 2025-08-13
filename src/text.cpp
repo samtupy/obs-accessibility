@@ -16,8 +16,7 @@
  with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#define FMT_HEADER_ONLY
-#include <fmt/base.h>
+#include <fmt/format.h>
 #include <obs-module.h>
 #include "text.h"
 
@@ -30,9 +29,10 @@ template<typename T> T *GetCalldataPointer(const calldata_t *data, const char *n
 	calldata_get_ptr(data, name, &ptr);
 	return static_cast<T*>(ptr);
 }
-string _t(const string& string_id) {
-	const char* result = obs_module_text(string_id.c_str());
-	return result? result : string_id;
+string _t(const string& string_id, const string& default_value) {
+	const char* result = nullptr;
+	bool exists = obs_module_get_string(string_id.c_str(), &result);
+	return exists? result : (default_value != "{id}"? default_value : string_id);
 }
 size_t find_unescaped(const string& input, const string& search, size_t start = 0) {
 	size_t pos = start;
@@ -76,9 +76,11 @@ string get_obs_variables(string variable, const calldata_t* data = nullptr, cons
 		if (!scene) return format(runtime(_t("scene_invalid")), variable);
 		string output = get_obs_source_variable(variable.substr(6), scene);
 		obs_source_release(scene);
+		return output;
 	} else if (variable == "tbar") return to_string(obs_frontend_get_tbar_position());
 	else if (data) {
 		if (variable.starts_with("source.")) return get_obs_source_variable(variable.substr(7), GetCalldataPointer<obs_source_t>(data, "source"));
+		if (variable.starts_with("filter.")) return get_obs_source_variable(variable.substr(7), GetCalldataPointer<obs_source_t>(data, "filter"));
 		bool calldata_b = false;
 		const char* calldata_s = calldata_string(data, variable.c_str());
 		if (calldata_s) return calldata_s;
@@ -86,10 +88,7 @@ string get_obs_variables(string variable, const calldata_t* data = nullptr, cons
 	}
 	return format(runtime(_t("variable_invalid")), variable);
 }
-string _t(const string& string_id, const calldata_t* data) {
-	const char* str = obs_module_text(string_id.c_str());
-	if (!str || string_id == str) return "";
-	string text = str;
+string replace_obs_variables(string text, const calldata_t* data) {
 	// Replace sequences such as {source.name} with their proper data.
 	bool escape_sequence = false;
 	size_t brace_level = 0, replacement_start = 0;
@@ -111,55 +110,9 @@ string _t(const string& string_id, const calldata_t* data) {
 		} else if (c == '}') {
 			brace_level -= 1;
 			if (brace_level) continue;
-			text.replace(replacement_start, i - replacement_start + 1, get_obs_variables(text.substr(replacement_start + 1, i - replacement_start -1), data, string_id));
+			text.replace(replacement_start, i - replacement_start + 1, get_obs_variables(text.substr(replacement_start + 1, i - replacement_start -1), data));
 			i = replacement_start -1;
 		}
 	}
 	return text;
-}
-string obs_frontend_event_id(obs_frontend_event event) {
-	switch (event) {
-		case OBS_FRONTEND_EVENT_STREAMING_STARTING: return "streaming_starting";
-		case OBS_FRONTEND_EVENT_STREAMING_STARTED: return "streaming_started";
-		case OBS_FRONTEND_EVENT_STREAMING_STOPPING: return "streaming_stopping";
-		case OBS_FRONTEND_EVENT_STREAMING_STOPPED: return "streaming_stopped";
-		case OBS_FRONTEND_EVENT_RECORDING_STARTING: return "recording_starting";
-		case OBS_FRONTEND_EVENT_RECORDING_STARTED: return "recording_started";
-		case OBS_FRONTEND_EVENT_RECORDING_STOPPING: return "recording_stopping";
-		case OBS_FRONTEND_EVENT_RECORDING_STOPPED: return "recording_stopped";
-		case OBS_FRONTEND_EVENT_SCENE_CHANGED: return "scene_changed";
-		case OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED: return "scene_list_changed";
-		case OBS_FRONTEND_EVENT_TRANSITION_CHANGED: return "transition_changed";
-		case OBS_FRONTEND_EVENT_TRANSITION_STOPPED: return "transition_stopped";
-		case OBS_FRONTEND_EVENT_TRANSITION_LIST_CHANGED: return "transition_list_changed";
-		case OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED: return "scene_collection_changed";
-		case OBS_FRONTEND_EVENT_SCENE_COLLECTION_LIST_CHANGED: return "scene_collection_list_changed";
-		case OBS_FRONTEND_EVENT_PROFILE_CHANGED: return "profile_changed";
-		case OBS_FRONTEND_EVENT_PROFILE_LIST_CHANGED: return "profile_list_changed";
-		case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING: return "replay_buffer_starting";
-		case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED: return "replay_buffer_started";
-		case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPING: return "replay_buffer_stopping";
-		case OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED: return "replay_buffer_stopped";
-		case OBS_FRONTEND_EVENT_STUDIO_MODE_ENABLED: return "studio_mode_enabled";
-		case OBS_FRONTEND_EVENT_STUDIO_MODE_DISABLED: return "studio_mode_disabled";
-		case OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED: return "preview_scene_changed";
-		case OBS_FRONTEND_EVENT_SCENE_COLLECTION_CLEANUP: return "scene_collection_cleanup";
-		case OBS_FRONTEND_EVENT_FINISHED_LOADING: return "finished_loading";
-		case OBS_FRONTEND_EVENT_RECORDING_PAUSED: return "recording_paused";
-		case OBS_FRONTEND_EVENT_RECORDING_UNPAUSED: return "recording_unpaused";
-		case OBS_FRONTEND_EVENT_TRANSITION_DURATION_CHANGED: return "transition_duration_changed";
-		case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED: return "replay_buffer_saved";
-		case OBS_FRONTEND_EVENT_VIRTUALCAM_STARTED: return "virtualcam_started";
-		case OBS_FRONTEND_EVENT_VIRTUALCAM_STOPPED: return "virtualcam_stopped";
-		case OBS_FRONTEND_EVENT_TBAR_VALUE_CHANGED: return "tbar_value_changed";
-		case OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGING: return "scene_collection_changing";
-		case OBS_FRONTEND_EVENT_PROFILE_CHANGING: return "profile_changing";
-		case OBS_FRONTEND_EVENT_PROFILE_RENAMED: return "profile_renamed";
-		case OBS_FRONTEND_EVENT_SCENE_COLLECTION_RENAMED: return "scene_collection_renamed";
-		case OBS_FRONTEND_EVENT_THEME_CHANGED: return "theme_changed";
-		case OBS_FRONTEND_EVENT_SCREENSHOT_TAKEN: return "screenshot_taken";
-		case OBS_FRONTEND_EVENT_CANVAS_ADDED: return "canvas_added";
-		case OBS_FRONTEND_EVENT_CANVAS_REMOVED: return "canvas_removed";
-		default: return "";
-	}
 }

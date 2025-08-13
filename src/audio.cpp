@@ -19,11 +19,13 @@
 #define MINIAUDIO_IMPLEMENTATION
 #define MA_ENABLE_ONLY_SPECIFIC_BACKENDS //MA_NO_DEVICE is broken right now
 #define MA_NO_ENCODING
+#include <filesystem>
 #include <vector>
 #include <obs.h>
 #include <obs-module.h>
 #include <obs-source.h>
 #include "audio.h"
+#include "config.h"
 
 using namespace std;
 
@@ -85,6 +87,7 @@ static void* event_source_create(obs_data_t* settings, obs_source_t* source) {
 	if (pthread_create(&d->thread, NULL, event_source_thread, d) != 0) goto fail;
 	d->initialized_thread = true;
 	d->global_events = false;
+	d->ui_event = nullptr;
 	g_audio_event_sources.push_back(d);
 	return d;
 	fail:
@@ -98,6 +101,10 @@ obs_source_info event_source = {
 	.get_name = event_source_getname,
 	.create = event_source_create,
 	.destroy = event_source_destroy,
+	.get_defaults = event_source_defaults,
+	.get_properties = event_source_getprops,
+	.update = event_source_update,
+	.save = event_source_save,
 };
 bool init_audio(obs_data_t* settings) {
 	if (g_audio_event_source) return true; // audio already initialized.
@@ -129,12 +136,22 @@ void shutdown_audio() {
 }
 bool play(const string& earcon) {
 	bool success = false;
-	for (const char** extension = g_audio_extensions; *extension; ++extension) {
-		char* file = obs_module_file(("earcon/"s + earcon + *extension).c_str());
-		if (!file) continue;
-		for (auto s : g_audio_event_sources)
-			success = ma_engine_play_sound(&*s->engine, file, nullptr) == MA_SUCCESS;
-		bfree(file);
+	event_type* event = get_event_type(earcon);
+	if (!event) return false;
+	for (event_source_data* src : g_audio_event_sources) {
+		if (!get_property_bool("sound", src->source) || event->get_muted(src->source)) continue;
+		string config_path = get_property_string("earcon_path");
+		if (config_path.empty()) {
+			char* tmp = obs_module_file("earcon");
+			if (!tmp) continue;
+			config_path = tmp;
+			bfree(tmp);
+		}
+		for (const char** extension = g_audio_extensions; *extension; ++extension) {
+			filesystem::path path = filesystem::path(config_path) / string(earcon + *extension);
+			if (!filesystem::is_regular_file(path)) continue;
+			success = ma_engine_play_sound(&*src->engine, path.string().c_str(), nullptr) == MA_SUCCESS;
+		}
 	}
 	return success;
 }

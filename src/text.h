@@ -20,6 +20,5 @@
 #include <string>
 #include <obs-frontend-api.h>
 
-std::string _t(const std::string& string_id);
-std::string _t(const std::string& string_id, const calldata_t* calldata);
-std::string obs_frontend_event_id(obs_frontend_event event);
+std::string _t(const std::string& string_id, const std::string& default_value = "{id}");
+std::string replace_obs_variables(std::string text, const calldata_t* calldata);

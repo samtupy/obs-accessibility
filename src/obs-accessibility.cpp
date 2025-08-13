@@ -19,7 +19,7 @@
 #include <obs-module.h>
 #include <obs-frontend-api.h>
 #include <obs.hpp>
-#include <plugin-support.h>
+#include <obs-accessibility.h>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -27,12 +27,14 @@
 #include "audio.h"
 #include "config.h"
 #include "events.h"
+#include "interface.h"
 
 // plugin module definition and initialization
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 bool obs_module_load(void) {
 	init_events();
+	init_interface();
 	obs_data_t* settings = load_config();
 	bool success = init_audio(settings);
 	if (settings) obs_data_release(settings);
@@ -43,5 +45,6 @@ bool obs_module_load(void) {
 
 void obs_module_unload(void) {
 	shutdown_events();
+	shutdown_interface();
 	obs_log(LOG_INFO, "plugin unloaded");
 }

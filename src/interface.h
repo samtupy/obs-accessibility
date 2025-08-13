@@ -16,24 +16,19 @@
  with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <plugin-support.h>
+#pragma once
+#include <string>
+#include <QTCore/QEvent>
+#include <QTCore/QObject>
 
-const char *PLUGIN_NAME = "@CMAKE_PROJECT_NAME@";
-const char *PLUGIN_VERSION = "@CMAKE_PROJECT_VERSION@";
+class qt_event_filter : public QObject {
+	Q_OBJECT
+public:
+	explicit qt_event_filter(QObject* parent = nullptr);
+protected:
+	bool eventFilter(QObject* watched, QEvent* event) override;
+};
 
-void obs_log(int log_level, const char *format, ...)
-{
-	size_t length = 4 + strlen(PLUGIN_NAME) + strlen(format);
-
-	char *template = malloc(length + 1);
-
-	snprintf(template, length, "[%s] %s", PLUGIN_NAME, format);
-
-	va_list(args);
-
-	va_start(args, format);
-	blogva(log_level, template, args);
-	va_end(args);
-
-	free(template);
-}
+void correct_properties_focus();
+void init_interface();
+void shutdown_interface();

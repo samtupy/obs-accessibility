@@ -23,6 +23,7 @@
 #include <util/platform.h>
 #include <memory>
 #include <string>
+#include "events.h"
 
 // Defines custom data required for our event audio delivery and configuration source to function.
 struct event_source_data {
@@ -32,6 +33,7 @@ struct event_source_data {
 	os_event_t *event;
 	obs_source_t *source;
 	std::unique_ptr<ma_engine> engine;
+	event_type* ui_event; // Keeps track of the event settings are being changed for.
 };
 
 bool init_audio(obs_data_t* settings = nullptr);

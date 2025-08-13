@@ -17,6 +17,36 @@
 */
 
 #pragma once
+#include <string>
+#include <vector>
+#include <obs-frontend-api.h>
+#include <obs-source.h>
 
-void init_events();
-void shutdown_events();
+// Describes a frontend event or signal we can listen for.
+class event_type {
+	std::string id;
+	bool has_event;
+	obs_frontend_event event;
+	std::string primary_data;
+public:
+	event_type(obs_frontend_event event, const std::string& id);
+	event_type(const std::string& id, const std::string& primary_data);
+	std::string get_id() const;
+	std::string get_name() const; // translated id.name
+	std::string get_description() const; // translated id.description
+	std::string get_default_message() const; // translated id.message
+	std::string describe() const; // translated id.name; id.description
+	bool get_muted(obs_source_t* event_source = nullptr) const; // Returns true if user has muted earcons for this event.
+	std::string get_message(obs_source_t* event_source = nullptr) const; // Gets either the configured or default spoken message for this event.
+	bool is_frontend_event() const;
+	bool is_signal() const;
+	obs_frontend_event get_frontend_event() const; // Throws exception if not a frontend event.
+	std::string get_primary_data() const; // Throws exception if no primary signal data.
+};
+event_type* get_event_type(obs_frontend_event event);
+std::string get_event_type_id(obs_frontend_event event);
+event_type* get_event_type(const std::string& id);
+void get_event_types(std::vector<std::string>& out_events);
+
+void init_events(); // Registers event types and listeners, call once on module load.
+void shutdown_events(); // Disconnects event listeners, call once on module unload.

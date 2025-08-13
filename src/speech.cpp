@@ -41,9 +41,12 @@ bool init_speech() {
 	#endif
 }
 bool speak(const string& text, bool interrupt) {
+	return speak(QString::fromUtf8(text.c_str(), text.size()).toStdWString(), interrupt);
+}
+bool speak(const wstring& text, bool interrupt) {
 	if (!init_speech()) return false;
 	#ifdef _WIN32
-		return speechSay(QString::fromUtf8(text.c_str(), text.size()).toStdWString().c_str(), interrupt);
+		return speechSay(text.c_str(), interrupt);
 	#else
 		return false;
 	#endif

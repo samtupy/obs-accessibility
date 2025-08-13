@@ -34,6 +34,7 @@ if(WIN32)
 	endforeach()
 endif()
 find_package(fmt CONFIG REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE fmt::fmt)
 
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
