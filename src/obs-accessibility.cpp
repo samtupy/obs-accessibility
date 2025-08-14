@@ -33,13 +33,15 @@
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 bool obs_module_load(void) {
+	OBSDataAutoRelease settings = load_config();
+	bool success = init_audio(settings);
+	if (!success) {
+		obs_log(LOG_INFO, "event_source initialization fail (version %s)", PLUGIN_VERSION);
+		return false;
+	}
 	init_events();
 	init_interface();
-	obs_data_t* settings = load_config();
-	bool success = init_audio(settings);
-	if (settings) obs_data_release(settings);
-	if (!success) obs_log(LOG_INFO, "event_source initialization fail (version %s)", PLUGIN_VERSION);
-	else obs_log(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
+	obs_log(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
 	return true;
 }
 

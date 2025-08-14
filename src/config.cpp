@@ -137,13 +137,23 @@ inline OBSDataAutoRelease get_properties(obs_source_t* source = nullptr) {
 	}
 	return obs_source_get_settings(source);
 }
-inline OBSDataAutoRelease get_config(obs_source_t* source = nullptr) {
+OBSDataAutoRelease get_config(obs_source_t* source) {
 	if (!source) {
 		event_source_data* event_source = get_audio_event_source();
 		if (!event_source) return nullptr;
 		source = event_source->source;
 	}
 	return obs_source_get_private_settings(source);
+}
+OBSDataAutoRelease get_hotkeys_config() {
+	OBSDataAutoRelease config = get_config();
+	if (!config) return nullptr;
+	OBSDataAutoRelease hotkeys = obs_data_get_obj(config, "hotkeys");
+	if (!hotkeys) {
+		hotkeys = obs_data_create();
+		obs_data_set_obj(config, "hotkeys", hotkeys);
+	}
+	return hotkeys;
 }
 bool get_property_bool(const string& key, obs_source_t* source) {
 	OBSDataAutoRelease settings = get_properties(source);

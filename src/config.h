@@ -19,6 +19,7 @@
 #pragma once
 #include <obs-data.h>
 #include <obs-properties.h>
+#include <obs.hpp>
 
 // Functions defined by our event source to make properties work, set up in audio.cpp.
 void event_source_save(void* data, obs_data_t* settings);
@@ -26,6 +27,8 @@ void event_source_update(void* data, obs_data_t* settings);
 void event_source_defaults(obs_data_t* settings);
 obs_properties_t* event_source_getprops(void* data);
 
+OBSDataAutoRelease get_config(obs_source_t* source = nullptr);
+OBSDataAutoRelease get_hotkeys_config();
 bool get_property_bool(const std::string& key, obs_source_t* source = nullptr);
 std::string get_property_string(const std::string& key, obs_source_t* source = nullptr);
 bool get_event_bool(const std::string& event_id, const std::string& key, bool default_value = false, obs_source_t* source = nullptr);
