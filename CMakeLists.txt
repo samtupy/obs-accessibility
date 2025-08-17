@@ -11,14 +11,13 @@ else()
 endif()
 
 project(${_name} VERSION ${_version})
-
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
 option(ENABLE_QT "Use Qt functionality" OFF)
 
 include(compilerconfig)
 include(defaults)
 include(helpers)
-list(APPEND CMAKE_VCPKG_PREFIX_PATH ${CMAKE_PREFIX_PATH})
+unset(CMAKE_PREFIX_PATH) # force reload from cache
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
