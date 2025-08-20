@@ -16,17 +16,23 @@
  with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
+#include <windows.h>
 #include <obs.hpp>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 #include <QDebug>
 #include <QObject>
 #include <QApplication>
+#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QMainWindow>
 #include <QPushButton>
+#include <QSpinBox>
+#include <QVBoxLayout>
 #include <QWidget>
 #include "audio.h" // get_audio_event_source()
 #include "config.h"
@@ -44,22 +50,67 @@ void correct_properties_focus() {
 }
 
 // Experimintal QT event handler which tries to make various interfaces more accessible, these are hacks that should really be implemented properly into obs.
+void fix_property_controls(QFormLayout* layout);
+void fix_property_editable_list_buttons(QVBoxLayout* buttons) {
+	// Editable lists create 5 unlabeled buttons. In order they are add, remove, edit, move up, and move down.
+	if (!buttons || buttons->count() < 5) return;
+	const char* button_names[5] = {"add", "remove", "edit", "move_up", "move_down"};
+	for (int i = 0; i < 5; i++) {
+		QPushButton* btn = qobject_cast<QPushButton*>(buttons->itemAt(i)->widget());
+		if (btn) btn->setAccessibleName(obs_module_text(button_names[i]));
+	}
+}
+void fix_property_control(QWidget* control, QLayout* layout, QWidget* label_widget = nullptr) {
+	QLabel* label = label_widget? qobject_cast<QLabel*>(label_widget) : nullptr;
+	if (label_widget && !label) {
+		QHBoxLayout* lbl_layout = qobject_cast<QHBoxLayout*>(label_widget->layout());
+		if (lbl_layout) label = qobject_cast<QLabel*>(lbl_layout->itemAt(0)->widget());
+	}
+	if (control) {
+		QString name = control->accessibleName();
+		QGroupBox* group = qobject_cast<QGroupBox*>(control);
+		if (group) {
+			if (name == "group" && group->title() != "") control->setAccessibleName(group->title());
+			QFormLayout* group_layout = qobject_cast<QFormLayout*>(group->layout());
+			if (group_layout) fix_property_controls(group_layout);
+		}
+		else if (name == "" && label) control->setAccessibleName(label->text());
+		control->setAccessibleDescription(control->toolTip());
+	} else if (layout && layout->count() > 0) {
+		QLineEdit* sub_edit = qobject_cast<QLineEdit*>(layout->itemAt(0)->widget());
+		QSlider* slider = qobject_cast<QSlider*>(layout->itemAt(0)->widget());
+		QSpinBox* spin = qobject_cast<QSpinBox*>(layout->itemAt(layout->count() > 1? 1 : 0)->widget());
+		QDoubleSpinBox* dspin = qobject_cast<QDoubleSpinBox*>(layout->itemAt(layout->count() > 1? 1 : 0)->widget());
+		QListWidget* list = qobject_cast<QListWidget*>(layout->itemAt(0)->widget());
+		if (sub_edit) sub_edit->setAccessibleName(label && label->text() != ""? label->text() : sub_edit->toolTip());
+		else if (slider) slider->setAccessibleName(label && label->text() != ""? label->text() : slider->toolTip());
+		if (spin) spin->setAccessibleName(label && label->text() != ""? label->text() : spin->toolTip());
+		else if (dspin) dspin->setAccessibleName(label && label->text() != ""? label->text() : dspin->toolTip());
+		if (list) {
+			list->setAccessibleName(label && label->text() != ""? label->text() : list->toolTip());
+			if (layout->count() > 1) fix_property_editable_list_buttons(qobject_cast<QVBoxLayout*>(layout->itemAt(1)->layout()));
+		}
+	}
+}
+void fix_property_controls(QFormLayout* layout) {
+	for (int i = 0; i < layout->count(); i++) {
+		QWidget* w = layout->itemAt(i)->widget();
+		QLayout* l = layout->itemAt(i)->layout();
+		QWidget* lbl_widget = w? layout->labelForField(w) : layout->labelForField(l);
+		fix_property_control(w, l, lbl_widget);
+	}
+}
 qt_event_filter::qt_event_filter(QObject* parent) : QObject(parent) {}
 bool qt_event_filter::eventFilter(QObject* watched, QEvent* event) {
 	QWidget* widget = qobject_cast<QWidget*>(watched);
 	if (event->type() == QEvent::WindowActivate) {
 		QPushButton* btn = qobject_cast<QPushButton*>(widget);
 		if (btn && btn->isDefault()) g_last_default_button = btn;
+	} else if (event->type() == QEvent::ParentChange) {
 		if (watched->objectName() == "PropertiesContainer") {
 			QFormLayout* layout = qobject_cast<QFormLayout*>(widget->layout());
 			if (!layout) return false;
-			for (int i = 0; i < layout->count(); i++) {
-				QWidget* w = layout->itemAt(i)->widget();
-				if (!w) continue;
-				QString name = w->accessibleName();
-				QGroupBox* group = qobject_cast<QGroupBox*>(w);
-				if (group && name == "group" && group->title() != "") w->setAccessibleName(group->title());
-			}
+			fix_property_controls(layout);
 		}
 	}
 	return false;
@@ -76,9 +127,9 @@ bool obs_window_visible() {
 		return win? win->isVisible() : false;
 }
 bool on_hk_window_hide(void* data, obs_hotkey_pair_id id, obs_hotkey_t *hotkey, bool pressed) {
-	if (!pressed) return obs_window_visible();
 	QMainWindow* win = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-	if (win) win->showMinimized();
+	if (!win || !pressed) return obs_window_visible();
+	win->setWindowState((win->windowState() & ~Qt::WindowActive) | Qt::WindowMinimized);
 	return false;
 }
 bool on_hk_window_show(void* data, obs_hotkey_pair_id id, obs_hotkey_t *hotkey, bool pressed) {

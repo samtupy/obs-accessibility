@@ -108,9 +108,7 @@ obs_properties_t* event_source_getprops(void* data) {
 	}
 	obs_properties_add_bool(props, "sound", obs_module_text("props.sound"));
 	obs_property_t* earcon_path = obs_properties_add_path(props, "earcon_path", obs_module_text("props.earcon_path"), OBS_PATH_DIRECTORY, "", "");
-	obs_property_set_long_description(earcon_path, obs_module_text("props.earcon_path"));
 	obs_property_t* event_list = obs_properties_add_list(props, "event_list", obs_module_text("props.events"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_property_set_long_description(event_list, obs_module_text("props.events"));
 	vector<string> events;
 	get_event_types(events);
 	for (auto i : events) obs_property_list_add_string(event_list, get_event_type(i)->describe().c_str(), i.c_str());
