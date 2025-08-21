@@ -1,0 +1,24 @@
+#define PluginName "@CMAKE_PROJECT_NAME@"
+#define PluginVersion "@CMAKE_PROJECT_VERSION@"
+#define PluginPublisher "@PLUGIN_AUTHOR@"
+#define PluginURL "@PLUGIN_WEBSITE@"
+
+[Setup]
+AppId={{@INSTALL_UUID@}
+AppName={#PluginName}
+AppVersion={#PluginVersion}
+AppPublisher={#PluginPublisher}
+AppPublisherURL={#PluginURL}
+AppSupportURL={#PluginURL}
+AppUpdatesURL={#PluginURL}
+DefaultDirName={commonappdata}\obs-studio\plugins\{#PluginName}
+OutputBaseFilename={#PluginName}-{#PluginVersion}-setup
+Compression=lzma
+SolidCompression=yes
+DirExistsWarning=no
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Files]
+Source: "..\release\Package\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

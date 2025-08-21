@@ -15,7 +15,7 @@
 !buildspec.json
 !CMakeLists.txt
 !CMakePresets.json
-!install.iss
+!install.iss.in
 !LICENSE
 !README.md
 
