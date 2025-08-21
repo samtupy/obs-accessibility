@@ -20,15 +20,16 @@
 #include <string>
 #include <QTCore/QEvent>
 #include <QTCore/QObject>
+class QListWidgetItem;
 
 class qt_event_filter : public QObject {
 	Q_OBJECT
+	bool debug;
 public:
-	explicit qt_event_filter(QObject* parent = nullptr);
+	qt_event_filter(QObject* parent, bool debug = false);
 protected:
 	bool eventFilter(QObject* watched, QEvent* event) override;
 };
 
-void correct_properties_focus();
 void init_interface();
 void shutdown_interface();

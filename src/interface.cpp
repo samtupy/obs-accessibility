@@ -20,9 +20,11 @@
 #include <obs.hpp>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
-#include <QDebug>
-#include <QObject>
+#include <fmt/format.h>
 #include <QApplication>
+#include <QCheckBox>
+#include <QDebug>
+#include <QDialog>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QGroupBox>
@@ -30,6 +32,8 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMainWindow>
+#include <QMenuBar>
+#include <QObject>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
@@ -38,18 +42,21 @@
 #include "config.h"
 #include "interface.h"
 #include "speech.h"
+#include "text.h"
 
 using namespace std;
+using namespace fmt;
 
 // This file contains all code pertaining strictly to the UI, whether that be adding/handling menu items, dealing with hotkeys, calling into qt or anything similar.
 
 // Hack which somewhat corrects properties dialog focus after a widget redraw.
-QPushButton* g_last_default_button;
+QPushButton* g_last_default_button = nullptr;
 void correct_properties_focus() {
-	g_last_default_button->setFocus();
+	if (g_last_default_button) g_last_default_button->setFocus();
 }
 
-// Experimintal QT event handler which tries to make various interfaces more accessible, these are hacks that should really be implemented properly into obs.
+// Experimintal QT event handler and related helper functions which try to make various interfaces more accessible, these are hacks that should really be implemented properly into obs.
+qt_event_filter* g_qt_filter = nullptr;
 void fix_property_controls(QFormLayout* layout);
 void fix_property_editable_list_buttons(QVBoxLayout* buttons) {
 	// Editable lists create 5 unlabeled buttons. In order they are add, remove, edit, move up, and move down.
@@ -63,6 +70,7 @@ void fix_property_editable_list_buttons(QVBoxLayout* buttons) {
 void fix_property_control(QWidget* control, QLayout* layout, QWidget* label_widget = nullptr) {
 	QLabel* label = label_widget? qobject_cast<QLabel*>(label_widget) : nullptr;
 	if (label_widget && !label) {
+		// Usually this means that a label was provided, but a tooltip was provided as well. When this happens the label widget turns into a layout with the actual text we're interested in provided in the first sub widget in this layout.
 		QHBoxLayout* lbl_layout = qobject_cast<QHBoxLayout*>(label_widget->layout());
 		if (lbl_layout) label = qobject_cast<QLabel*>(lbl_layout->itemAt(0)->widget());
 	}
@@ -93,6 +101,8 @@ void fix_property_control(QWidget* control, QLayout* layout, QWidget* label_widg
 	}
 }
 void fix_property_controls(QFormLayout* layout) {
+	// Labels all dynamic properties of a dialog created from an obs_properties_t object and insures keyboard focus at least exists. Result is undefined if a QFormLayout that is not created by OBSBasicProperties is used.
+	if (!QApplication::focusWidget()) correct_properties_focus();
 	for (int i = 0; i < layout->count(); i++) {
 		QWidget* w = layout->itemAt(i)->widget();
 		QLayout* l = layout->itemAt(i)->layout();
@@ -100,12 +110,49 @@ void fix_property_controls(QFormLayout* layout) {
 		fix_property_control(w, l, lbl_widget);
 	}
 }
-qt_event_filter::qt_event_filter(QObject* parent) : QObject(parent) {}
+void fix_filters_dialog(QDialog* dlg) {	
+	// Labels filter list items as well as their visibility checkboxes.
+	QListWidget* filters = nullptr;
+	QListWidget* async_filters = dlg->findChild<QListWidget*>("asyncFilters");
+	if (async_filters) {
+		QLabel* lbl = dlg->findChild<QLabel*>("asyncLabel");
+		if (lbl) async_filters->setAccessibleName(lbl->text());
+		if (async_filters->count() > 0) filters = async_filters;
+	}
+	QListWidget* effect_filters = dlg->findChild<QListWidget*>("effectFilters");
+	if (effect_filters) {
+		QLabel* lbl = dlg->findChild<QLabel*>("label_2");
+		if (lbl) effect_filters->setAccessibleName(lbl->text());
+		if (effect_filters->count() > 0) filters = effect_filters;
+	}
+	if (!filters) return;
+	for (int i = 0; i < filters->count(); i++) {
+		QListWidgetItem* filter_item = filters->item(i);
+		if (!filters->itemWidget(filter_item)) continue;
+		QHBoxLayout* filter_item_layout = qobject_cast<QHBoxLayout*>(filters->itemWidget(filter_item)->layout());
+		if (!filter_item_layout || filter_item_layout->count() < 2) continue;
+		QCheckBox* filter_toggle = qobject_cast<QCheckBox*>(filter_item_layout->itemAt(0)->widget());
+		QLabel* filter_label = qobject_cast<QLabel*>(filter_item_layout->itemAt(1)->widget());
+		if (!filter_toggle || !filter_label) continue;
+		filter_toggle->setAccessibleName(filter_label->text());
+		filter_item->setData(Qt::AccessibleTextRole, filter_label->text());
+	}
+}
+qt_event_filter::qt_event_filter(QObject* parent, bool debug) : QObject(parent), debug(debug) {}
 bool qt_event_filter::eventFilter(QObject* watched, QEvent* event) {
+	if (event->type() == QEvent::Timer) return false;
+	if (debug) {
+		speak(QDebug::toString(event).toStdWString());
+		return false;
+	}
 	QWidget* widget = qobject_cast<QWidget*>(watched);
 	if (event->type() == QEvent::WindowActivate) {
 		QPushButton* btn = qobject_cast<QPushButton*>(widget);
 		if (btn && btn->isDefault()) g_last_default_button = btn;
+	} else if (event->type() == QEvent::Paint) {
+		// Todo: Find a better event that fires far less but still enough.
+		QDialog* dlg = qobject_cast<QDialog*>(widget);
+		if (dlg && dlg->objectName() == "OBSBasicFilters") fix_filters_dialog(dlg);
 	} else if (event->type() == QEvent::ParentChange) {
 		if (watched->objectName() == "PropertiesContainer") {
 			QFormLayout* layout = qobject_cast<QFormLayout*>(widget->layout());
@@ -115,27 +162,24 @@ bool qt_event_filter::eventFilter(QObject* watched, QEvent* event) {
 	}
 	return false;
 }
-qt_event_filter* g_qt_filter = nullptr;
 
 void on_global_properties(void* data) {
 	event_source_data* src = get_audio_event_source();
 	if (!src) return;
 	obs_frontend_open_source_properties(src->source);
 }
-bool obs_window_visible() {
-		QMainWindow* win = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-		return win? win->isVisible() : false;
-}
 bool on_hk_window_hide(void* data, obs_hotkey_pair_id id, obs_hotkey_t *hotkey, bool pressed) {
 	QMainWindow* win = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-	if (!win || !pressed) return obs_window_visible();
-	win->setWindowState((win->windowState() & ~Qt::WindowActive) | Qt::WindowMinimized);
-	return false;
+	if (!pressed || !win || !win->isVisible()) return false;
+	if (win->menuBar()->hasFocus()) return false;
+	win->showMinimized();
+	return true;
 }
 bool on_hk_window_show(void* data, obs_hotkey_pair_id id, obs_hotkey_t *hotkey, bool pressed) {
 	QMainWindow* win = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-	if (!pressed || !win) return obs_window_visible();
+	if (!pressed || !win || win->isVisible()) return false;
 	win->raise();
+	win->show();
 	win->activateWindow();
 	win->setWindowState((win->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
 	return true;
@@ -152,6 +196,8 @@ void on_hotkey_bindings_changed(void* param, calldata_t* data) {
 		if (binding) obs_data_set_array(hotkeys, obs_hotkey_get_name(hotkey), binding);
 		else obs_data_erase(hotkeys, obs_hotkey_get_name(hotkey));
 	}
+	QMainWindow* win = static_cast<QMainWindow*>(obs_frontend_get_main_window());
+	win->menuBar()->setNativeMenuBar(true);
 }
 void init_interface() {
 	obs_frontend_add_tools_menu_item(obs_module_text("props.show"), on_global_properties, nullptr);

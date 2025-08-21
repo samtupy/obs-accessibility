@@ -48,7 +48,6 @@ bool on_event_edit(obs_properties_t* settings, obs_property_t* property, void* d
 	obs_data_set_bool(change, "event_muted", event->get_muted(src->source));
 	obs_data_set_string(change, "event_message", event->get_message(src->source).c_str());
 	obs_source_update(src->source, change);
-	correct_properties_focus();
 	return true;
 }
 bool on_event_edit_message_default(obs_properties_t* settings, obs_property_t* property, void* data) {
@@ -58,7 +57,6 @@ bool on_event_edit_message_default(obs_properties_t* settings, obs_property_t* p
 	OBSDataAutoRelease change = obs_source_get_settings(src->source);
 	obs_data_set_string(change, "event_message", msg.c_str());
 	obs_source_update(src->source, change);
-	correct_properties_focus();
 	return true;
 }
 bool on_event_edit_save(obs_properties_t* settings, obs_property_t* property, void* data) {
@@ -71,7 +69,6 @@ bool on_event_edit_save(obs_properties_t* settings, obs_property_t* property, vo
 	obs_property_set_visible(obs_properties_get(settings, "event_edit"), false);
 	obs_property_set_visible(obs_properties_get(settings, "event_edit_btn"), true);
 	src->ui_event = nullptr;
-	correct_properties_focus();
 	return true;
 }
 bool on_event_edit_cancel(obs_properties_t* settings, obs_property_t* property, void* data) {
@@ -79,7 +76,6 @@ bool on_event_edit_cancel(obs_properties_t* settings, obs_property_t* property, 
 	obs_property_set_visible(obs_properties_get(settings, "event_edit"), false);
 	obs_property_set_visible(obs_properties_get(settings, "event_edit_btn"), true);
 	src->ui_event = nullptr;
-	correct_properties_focus();
 	return true;
 }
 void event_source_defaults(obs_data_t* settings) {
