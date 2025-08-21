@@ -9,9 +9,11 @@
     {
       "name": "template",
       "hidden": true,
+      "toolchainFile": "vcpkg/bin/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "ENABLE_FRONTEND_API": true,
-        "ENABLE_QT": true
+        "ENABLE_QT": true,
+        "INSTALL_UUID": "97a19aaf-b638-4dcf-b198-5170bdb5f949"
       }
     },
     {

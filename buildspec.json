@@ -33,13 +33,13 @@
     },
     "platformConfig": {
         "macos": {
-            "bundleId": "com.example.plugintemplate-for-obs"
+            "bundleId": "com.samtupy.obs-accessibility-plugin"
         }
     },
     "name": "obs-accessibility",
     "displayName": "Accessibility Plugin for OBS",
     "version": "1.0.0",
     "author": "Sam Tupy Productions",
-    "website": "https://samtupy.com",
+    "website": "https://github.com/samtupy/obs-accessibility",
     "email": "webmaster@samtupy.com"
 }
