@@ -21,4 +21,4 @@ DirExistsWarning=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "..\release\Package\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\release\Package\{#PluginName}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
