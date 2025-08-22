@@ -1,5 +1,7 @@
 # OBS Accessibility plugin
 
+Binaries available on the  [releases page](https://github.com/samtupy/obs-accessibility/releases)
+
 ## Introduction
 
 This is a plugin for [OBS](https://obsproject.com) that adds audio queues, screen reader announcements and other accessibility features to the software.
@@ -69,7 +71,7 @@ The following variables are available in source objects:
 
 ## Window visibility hotkey
 
-After this plugin is installed, you can visit the OBS hotkey settings and type "obs window" into the filter box to locate the plugin's hotkey pair to minimize/restore the OBS main window. Particularly when "always minimize to system tray instead of task bar" is checked in the OBS general settings, this is a great way to keep OBS invisible while being able to bring it back and make a tweak exactly when you need.
+After this plugin is installed, you can visit the OBS hotkey settings and type "obs window" into the filter box to locate the plugin's hotkey pair to minimize/restore the OBS main window. Particularly when "always minimize to system tray instead of task bar" is checked in the OBS general settings, this is a great way to keep OBS invisible while being able to bring it back and make a tweak exactly when you need. The feature might need a bit of improvement when the window is set to minimize to task bar instead of tray.
 
 ## User Interface Tweaks
 
