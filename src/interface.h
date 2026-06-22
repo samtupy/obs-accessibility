@@ -18,8 +18,8 @@
 
 #pragma once
 #include <string>
-#include <QTCore/QEvent>
-#include <QTCore/QObject>
+#include <QtCore/QEvent>
+#include <QtCore/QObject>
 class QListWidgetItem;
 
 class qt_event_filter : public QObject {
