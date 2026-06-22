@@ -159,7 +159,7 @@ void unregister_event_types() {
 }
 
 bool g_receive_events = false; // Set to true when program finishes loading, false when we start to exit.
-void on_event(obs_frontend_event event, void* user) {
+void on_event(obs_frontend_event event, void*) {
 	switch (event) {
 		case OBS_FRONTEND_EVENT_FINISHED_LOADING:
 			g_receive_events = true;
@@ -182,7 +182,7 @@ void on_event(obs_frontend_event event, void* user) {
 	if (text.empty()) return;
 	speak(text, get_property_bool("speech_interrupt"));
 }
-void on_signal(void* param, const char* signal_name, calldata_t* data) {
+void on_signal(void*, const char* signal_name, calldata_t* data) {
 	if (!g_receive_events) return;
 	event_type* event_obj = get_event_type(signal_name);
 	if (!event_obj) return;
