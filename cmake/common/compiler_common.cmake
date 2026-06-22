@@ -28,8 +28,8 @@ set(
   -Wswitch
   -Wno-unused-function
   -Wno-unused-label
-  -Wno-unused-parameter
-  -Wno-unused-variable
+  -Wno-error=unused-parameter
+  -Wno-error=unused-variable
   -Wunused-value
   -Wempty-body
   -Wuninitialized
