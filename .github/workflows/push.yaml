@@ -49,7 +49,7 @@ jobs:
           esac
 
       - name: Download Build Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         if: fromJSON(steps.check.outputs.validTag)
         id: download
 
