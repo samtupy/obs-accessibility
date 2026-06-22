@@ -29,7 +29,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Check For Changed Files ✅
+    - name: Check For Changed Files
       shell: bash
       id: checks
       env:
@@ -40,7 +40,7 @@ runs:
         USE_FALLBACK: ${{ inputs.useFallback }}
         DIFF_FILTER: ${{ inputs.diffFilter }}
       run: |
-        : Check for Changed Files ✅
+        : Check for Changed Files
         if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
         shopt -s extglob
         shopt -s dotglob

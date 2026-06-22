@@ -142,7 +142,7 @@ qt_event_filter::qt_event_filter(QObject* parent, bool debug) : QObject(parent),
 bool qt_event_filter::eventFilter(QObject* watched, QEvent* event) {
 	if (event->type() == QEvent::Timer) return false;
 	if (debug) {
-		speak(QDebug::toString(event).toStdWString());
+		speak(QDebug::toString(event).toStdString());
 		return false;
 	}
 	QWidget* widget = qobject_cast<QWidget*>(watched);

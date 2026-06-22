@@ -7,7 +7,7 @@ on:
         value: ${{ jobs.check-event.outputs.pluginName }}
 jobs:
   check-event:
-    name: Check GitHub Event Data 🔎
+    name: Check GitHub Event Data
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -23,12 +23,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Check Event Data ☑️
+      - name: Check Event Data
         id: setup
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          : Check Event Data ☑️
+          : Check Event Data
           if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
 
           case "${GITHUB_EVENT_NAME}" in
@@ -72,9 +72,8 @@ jobs:
           fi
 
   macos-build:
-    name: Build for macOS 🍏
+    name: Build for macOS
     runs-on: macos-15
-    if: false
     needs: check-event
     defaults:
       run:
@@ -85,10 +84,10 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set Up Environment 🔧
+      - name: Set Up Environment
         id: setup
         run: |
-          : Set Up Environment 🔧
+          : Set Up Environment
           if (( ${+RUNNER_DEBUG} )) setopt XTRACE
 
           print '::group::Enable Xcode 16.1'
@@ -121,21 +120,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-
 
-      - name: Set Up Codesigning 🔑
+      - name: Set Up Codesigning
         uses: ./.github/actions/setup-macos-codesigning
         if: fromJSON(needs.check-event.outputs.codesign)
         id: codesign
         with:
-          codesignIdentity: ${{ secrets.MACOS_SIGNING_APPLICATION_IDENTITY }}
-          installerIdentity: ${{ secrets.MACOS_SIGNING_INSTALLER_IDENTITY }}
+          codesignIdentity: ${{ vars.MACOS_SIGNING_APPLICATION_IDENTIFIER }}
+          installerIdentity: ${{ vars.MACOS_SIGNING_INSTALLER_IDENTIFIER }}
           codesignCertificate: ${{ secrets.MACOS_SIGNING_CERT }}
           certificatePassword: ${{ secrets.MACOS_SIGNING_CERT_PASSWORD }}
-          keychainPassword: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
-          provisioningProfile: ${{ secrets.MACOS_SIGNING_PROVISIONING_PROFILE }}
-          notarizationUser: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
-          notarizationPassword: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          codesignTeam: ${{ secrets.MACOS_SIGNING_TEAM_ID }}
+          notarizationUser: ${{ secrets.MACOS_SIGNING_NOTARY_USERNAME }}
+          notarizationPassword: ${{ secrets.MACOS_SIGNING_NOTARY_PASSWORD }}
 
-      - name: Build Plugin 🧱
+      - name: Build Plugin
         uses: ./.github/actions/build-plugin
         with:
           target: macos-universal
@@ -143,7 +141,7 @@ jobs:
           codesign: ${{ fromJSON(needs.check-event.outputs.codesign) }}
           codesignIdent: ${{ steps.codesign.outputs.codesignIdent }}
 
-      - name: Package Plugin 📀
+      - name: Package Plugin
         uses: ./.github/actions/package-plugin
         with:
           target: macos-universal
@@ -154,16 +152,16 @@ jobs:
           installerIdent: ${{ steps.codesign.outputs.installerIdent }}
           codesignTeam: ${{ steps.codesign.outputs.codesignTeam }}
           notarize: ${{ fromJSON(needs.check-event.outputs.notarize) && fromJSON(steps.codesign.outputs.haveNotarizationUser) }}
-          codesignUser: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
-          codesignPass: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+          codesignUser: ${{ secrets.MACOS_SIGNING_NOTARY_USERNAME }}
+          codesignPass: ${{ secrets.MACOS_SIGNING_NOTARY_PASSWORD }}
 
-      - name: Upload Artifacts 📡
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal-${{ needs.check-event.outputs.commitHash }}
           path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal.*
 
-      - name: Upload Debug Symbol Artifacts 🪲
+      - name: Upload Debug Symbol Artifacts
         uses: actions/upload-artifact@v4
         if: ${{ needs.check-event.outputs.config == 'Release' }}
         with:
@@ -177,12 +175,11 @@ jobs:
           key: ${{ runner.os }}-ccache-${{ needs.check-event.outputs.config }}
 
   ubuntu-build:
-    name: Build for Ubuntu 🐧
+    name: Build for Ubuntu
     strategy:
       matrix:
         os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
-    if: false
     needs: check-event
     defaults:
       run:
@@ -193,10 +190,10 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set Up Environment 🔧
+      - name: Set Up Environment
         id: setup
         run: |
-          : Set Up Environment 🔧
+          : Set Up Environment
           if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
 
           read -r product_name product_version <<< \
@@ -213,32 +210,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.os }}-ccache-x86_64-
 
-      - name: Build Plugin 🧱
+      - name: Build Plugin
         uses: ./.github/actions/build-plugin
         with:
           target: x86_64
           config: ${{ needs.check-event.outputs.config }}
 
-      - name: Package Plugin 📀
+      - name: Package Plugin
         uses: ./.github/actions/package-plugin
         with:
           target: x86_64
           config: ${{ needs.check-event.outputs.config }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
 
-      - name: Upload Source Tarball 🗜️
+      - name: Upload Source Tarball
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-${{ matrix.os }}-sources-${{ needs.check-event.outputs.commitHash }}
           path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-source.*
 
-      - name: Upload Artifacts 📡
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-${{ matrix.os }}-x86_64-${{ needs.check-event.outputs.commitHash }}
           path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-x86_64*.*
 
-      - name: Upload debug symbol artifacts 🪲
+      - name: Upload Debug Symbol Artifacts
         uses: actions/upload-artifact@v4
         if: ${{ fromJSON(needs.check-event.outputs.package) }}
         with:
@@ -252,7 +249,7 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.os }}-ccache-x86_64-${{ needs.check-event.outputs.config }}
 
   windows-build:
-    name: Build for Windows 🪟
+    name: Build for Windows
     runs-on: windows-2022
     needs: check-event
     defaults:
@@ -264,10 +261,10 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Set Up Environment 🔧
+      - name: Set Up Environment
         id: setup
         run: |
-          # Set Up Environment 🔧
+          # Set Up Environment
           if ( $Env:RUNNER_DEBUG -ne $null ) {
             Set-PSDebug -Trace 1
           }
@@ -279,20 +276,35 @@ jobs:
           "pluginName=${ProductName}" >> $env:GITHUB_OUTPUT
           "pluginVersion=${ProductVersion}" >> $env:GITHUB_OUTPUT
 
-      - name: Build Plugin 🧱
+      - name: Build Plugin
         uses: ./.github/actions/build-plugin
         with:
           target: x64
           config: ${{ needs.check-event.outputs.config }}
 
-      - name: Package Plugin 📀
+      - name: Package Plugin
         uses: ./.github/actions/package-plugin
         with:
           target: x64
           config: ${{ needs.check-event.outputs.config }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
 
-      - name: Upload Artifacts 📡
+      - name: Sign Windows Installer
+        if: fromJSON(needs.check-event.outputs.codesign) && fromJSON(needs.check-event.outputs.package)
+        uses: Azure/artifact-signing-action@v1
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ vars.AZURE_SIGNING_NAME }}
+          certificate-profile-name: ${{ vars.AZURE_SIGNING_CERT_NAME }}
+          timestamp-rfc3161: 'http://timestamp.acs.microsoft.com'
+          timestamp-digest: 'SHA256'
+          files-folder: ${{ github.workspace }}\release
+          files-folder-filter: exe
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-${{ needs.check-event.outputs.commitHash }}

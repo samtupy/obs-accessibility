@@ -69,11 +69,11 @@ runs:
 
         .github/scripts/package-macos ${package_args}
 
-    - name: Install Dependencies 🛍️
+    - name: Install Dependencies
       if: runner.os == 'Linux'
       shell: bash
       run: |
-        : Install Dependencies 🛍️
+        : Install Dependencies
         echo ::group::Install Dependencies
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
@@ -108,6 +108,10 @@ runs:
         $PackageArgs = @{
           Target = '${{ inputs.target }}'
           Configuration = '${{ inputs.config }}'
+        }
+
+        if ( '${{ inputs.package }}' -eq 'true' ) {
+          $PackageArgs['Package'] = $true
         }
 
         .github/scripts/Package-Windows.ps1 @PackageArgs

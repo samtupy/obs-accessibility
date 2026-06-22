@@ -19,5 +19,6 @@
 #pragma once
 #include <string>
 
+bool init_speech();
+void shutdown_speech();
 bool speak(const std::string& text, bool interrupt = true);
-bool speak(const std::wstring& text, bool interrupt = true);

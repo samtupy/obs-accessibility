@@ -38,7 +38,7 @@
     },
     "name": "obs-accessibility",
     "displayName": "Accessibility Plugin for OBS",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "author": "Sam Tupy Productions",
     "website": "https://github.com/samtupy/obs-accessibility",
     "email": "webmaster@samtupy.com"

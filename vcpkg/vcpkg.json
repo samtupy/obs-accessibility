@@ -2,10 +2,7 @@
   "name": "obs-accessibility",
   "version": "1.0.0",
   "dependencies": [
-    {
-      "name": "universalspeech",
-      "platform": "windows"
-    },
+    "ethindp-prism",
     "miniaudio",
     "fmt"
   ]

@@ -18,37 +18,39 @@
 
 #ifdef _WIN32
 	#include <windows.h>
-	#define UNIVERSAL_SPEECH_STATIC
-	#include <UniversalSpeech.h>
 	#include <obs-module.h>
 	#include <filesystem>
 	#include <QTCore/QString>
 #endif
+#include <prism.h>
 #include "speech.h"
 
 using namespace std;
 
-bool g_speech_active = false;
+PrismContext* g_speech_ctx = nullptr;
+PrismBackend* g_speech_backend = nullptr;
 bool init_speech() {
-	if (g_speech_active) return true;
-	#ifdef _WIN32
-		obs_module_t* mod = obs_current_module();
-		filesystem::path module_bin(obs_get_module_binary_path(mod));
-		SetDllDirectoryW(module_bin.parent_path().wstring().c_str());
-		return g_speech_active = true;
-	#else
-		return false; // no speech on this platform.
-	#endif
+	if (g_speech_ctx && g_speech_backend) return true;
+	if (!g_speech_ctx) {
+		#ifdef _WIN32
+			obs_module_t* mod = obs_current_module();
+			filesystem::path module_bin(obs_get_module_binary_path(mod));
+			SetDllDirectoryW(module_bin.parent_path().wstring().c_str()); // Now any additional screen reader dlls can load from the specified plugin bin directory.
+		#endif
+		g_speech_ctx = prism_init(nullptr);
+		if (!g_speech_ctx) return false;
+	}
+	g_speech_backend = prism_registry_acquire_best(g_speech_ctx);
+	return g_speech_backend != nullptr;
+}
+void shutdown_speech() {
+	if (g_speech_backend) prism_backend_free(g_speech_backend);
+	g_speech_backend = nullptr;
+	prism_shutdown(g_speech_ctx);
+	g_speech_ctx = nullptr;
 }
 bool speak(const string& text, bool interrupt) {
-	return speak(QString::fromUtf8(text.c_str(), text.size()).toStdWString(), interrupt);
-}
-bool speak(const wstring& text, bool interrupt) {
 	if (!init_speech()) return false;
-	#ifdef _WIN32
-		return speechSay(text.c_str(), interrupt);
-	#else
-		return false;
-	#endif
+	return prism_backend_speak(g_speech_backend, text.c_str(), interrupt) == PRISM_OK;
 }
 

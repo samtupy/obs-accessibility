@@ -1,5 +1,5 @@
 name: Push
-run-name: ${{ github.ref_name }} push run 🚀
+run-name: ${{ github.ref_name }} push run
 on:
   push:
     branches:
@@ -12,14 +12,14 @@ permissions:
   contents: write
 jobs:
   build-project:
-    name: Build Project 🧱
+    name: Build Project
     uses: ./.github/workflows/build-project.yaml
     secrets: inherit
     permissions:
       contents: read
 
   create-release:
-    name: Create Release 🛫
+    name: Create Release
     if: github.ref_type == 'tag'
     runs-on: ubuntu-24.04
     needs: build-project
@@ -27,10 +27,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Check Release Tag ☑️
+      - name: Check Release Tag
         id: check
         run: |
-          : Check Release Tag ☑️
+          : Check Release Tag
           if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
           shopt -s extglob
 
@@ -48,15 +48,15 @@ jobs:
             *) echo 'validTag=false' >> $GITHUB_OUTPUT ;;
           esac
 
-      - name: Download Build Artifacts 📥
+      - name: Download Build Artifacts
         uses: actions/download-artifact@v4
         if: fromJSON(steps.check.outputs.validTag)
         id: download
 
-      - name: Rename Files 🏷️
+      - name: Rename Files
         if: fromJSON(steps.check.outputs.validTag)
         run: |
-          : Rename Files 🏷️
+          : Rename Files
           if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
           shopt -s extglob
           shopt -s nullglob
@@ -66,6 +66,8 @@ jobs:
 
           variants=(
             'windows-x64;zip|exe'
+            'macos-universal;tar.xz|pkg'
+            'ubuntu-24.04-x86_64;tar.xz|deb|ddeb'
             'sources;tar.xz'
           )
 
@@ -79,10 +81,10 @@ jobs:
             done
           done
 
-      - name: Generate Checksums 🪪
+      - name: Generate Checksums
         if: fromJSON(steps.check.outputs.validTag)
         run: |
-          : Generate Checksums 🪪
+          : Generate Checksums
           if [[ "${RUNNER_DEBUG}" ]]; then set -x; fi
           shopt -s extglob
 
@@ -91,7 +93,7 @@ jobs:
             echo "    ${file##*/}: $(sha256sum "${file}" | cut -d " " -f 1)" >> ${{ github.workspace }}/CHECKSUMS.txt
           done
 
-      - name: Create Release 🛫
+      - name: Create Release
         if: fromJSON(steps.check.outputs.validTag)
         id: create_release
         uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564

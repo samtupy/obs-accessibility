@@ -28,6 +28,7 @@
 #include "config.h"
 #include "events.h"
 #include "interface.h"
+#include "speech.h"
 
 // plugin module definition and initialization
 OBS_DECLARE_MODULE()
@@ -48,5 +49,6 @@ bool obs_module_load(void) {
 void obs_module_unload(void) {
 	shutdown_events();
 	shutdown_interface();
+	shutdown_speech();
 	obs_log(LOG_INFO, "plugin unloaded");
 }

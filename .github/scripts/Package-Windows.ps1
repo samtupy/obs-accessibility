@@ -3,7 +3,8 @@ param(
     [ValidateSet('x64')]
     [string] $Target = 'x64',
     [ValidateSet('Debug', 'RelWithDebInfo', 'Release', 'MinSizeRel')]
-    [string] $Configuration = 'RelWithDebInfo'
+    [string] $Configuration = 'RelWithDebInfo',
+    [switch] $Package
 )
 
 $ErrorActionPreference = 'Stop'
@@ -46,6 +47,8 @@ function Package {
     $BuildSpec = Get-Content -Path ${BuildSpecFile} -Raw | ConvertFrom-Json
     $ProductName = $BuildSpec.name
     $ProductVersion = $BuildSpec.version
+    $ProductAuthor = $BuildSpec.author
+    $ProductWebsite = $BuildSpec.website
 
     $OutputName = "${ProductName}-${ProductVersion}-windows-${Target}"
 
@@ -53,6 +56,7 @@ function Package {
         ErrorAction = 'SilentlyContinue'
         Path = @(
             "${ProjectRoot}/release/${ProductName}-*-windows-*.zip"
+            "${ProjectRoot}/release/${ProductName}-*-windows-*-setup.exe"
         )
     }
 
@@ -66,19 +70,41 @@ function Package {
         Verbose = ($Env:CI -ne $null)
     }
     Compress-Archive -Force @CompressArgs
-
-    $IsccFile = "${ProjectRoot}/build_${Target}/install.iss"
-    if ( ! ( Test-Path -Path $IsccFile ) ) {
-        throw 'InnoSetup install script not found. Run the build script or the CMake build and install procedures first.'
-    }
-    Log-Information 'Creating InnoSetup installer...'
-    Push-Location -Stack BuildTemp
-    Ensure-Location -Path "${ProjectRoot}/release"
-    Copy-Item -Path ${Configuration} -Destination Package -Recurse
-    Invoke-External iscc ${IsccFile} /O"${ProjectRoot}/release" /F"${OutputName}-Installer"
-    Remove-Item -Path Package -Recurse
-    Pop-Location -Stack BuildTemp
     Log-Group
+
+    if ( $Package ) {
+        Log-Group "Building installer for ${ProductName}..."
+
+        $PackageDir = "${ProjectRoot}/release/Package/${ProductName}"
+        if ( Test-Path $PackageDir ) { Remove-Item -Recurse -Force $PackageDir }
+        New-Item -ItemType Directory -Force -Path $PackageDir | Out-Null
+
+        $CopyArgs = @{
+            Path = (Get-ChildItem -Path "${ProjectRoot}/release/${Configuration}" -Exclude "*.zip")
+            Destination = $PackageDir
+            Recurse = $true
+            Force = $true
+        }
+        Copy-Item @CopyArgs
+
+        $IssContent = Get-Content -Path "${ProjectRoot}/install.iss.in" -Raw
+        $IssContent = $IssContent -replace '@CMAKE_PROJECT_NAME@', $ProductName
+        $IssContent = $IssContent -replace '@CMAKE_PROJECT_VERSION@', $ProductVersion
+        $IssContent = $IssContent -replace '@PLUGIN_AUTHOR@', $ProductAuthor
+        $IssContent = $IssContent -replace '@PLUGIN_WEBSITE@', $ProductWebsite
+        Set-Content -Path "${ProjectRoot}/install.iss" -Value $IssContent
+
+        $env:PATH = "C:\Program Files (x86)\Inno Setup 6;$env:PATH"
+        Invoke-External ISCC.exe "${ProjectRoot}/install.iss"
+
+        $InstallerSrc = "${ProjectRoot}/release/${ProductName}-${ProductVersion}-setup.exe"
+        $InstallerDst = "${ProjectRoot}/release/${OutputName}-setup.exe"
+        if ( Test-Path $InstallerSrc ) {
+            Move-Item -Force $InstallerSrc $InstallerDst
+        }
+
+        Log-Group
+    }
 }
 
 Package
