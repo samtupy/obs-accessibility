@@ -19,6 +19,7 @@
 #define MINIAUDIO_IMPLEMENTATION
 #define MA_ENABLE_ONLY_SPECIFIC_BACKENDS //MA_NO_DEVICE is broken right now
 #define MA_NO_ENCODING
+#include <algorithm>
 #include <filesystem>
 #include <vector>
 #include <obs.h>

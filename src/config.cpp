@@ -103,7 +103,7 @@ obs_properties_t* event_source_getprops(void* data) {
 		obs_properties_add_bool(props, "speech_interrupt", obs_module_text("props.speech_interrupt"));
 	}
 	obs_properties_add_bool(props, "sound", obs_module_text("props.sound"));
-	obs_property_t* earcon_path = obs_properties_add_path(props, "earcon_path", obs_module_text("props.earcon_path"), OBS_PATH_DIRECTORY, "", "");
+	obs_properties_add_path(props, "earcon_path", obs_module_text("props.earcon_path"), OBS_PATH_DIRECTORY, "", "");
 	obs_property_t* event_list = obs_properties_add_list(props, "event_list", obs_module_text("props.events"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	vector<string> events;
 	get_event_types(events);
