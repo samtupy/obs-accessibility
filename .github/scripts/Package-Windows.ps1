@@ -56,7 +56,7 @@ function Package {
         ErrorAction = 'SilentlyContinue'
         Path = @(
             "${ProjectRoot}/release/${ProductName}-*-windows-*.zip"
-            "${ProjectRoot}/release/${ProductName}-*-windows-*-setup.exe"
+            "${ProjectRoot}/release/${ProductName}-*-windows-*.exe"
         )
     }
 
