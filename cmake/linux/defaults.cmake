@@ -38,7 +38,7 @@ set(
   build_.*
   cmake/\\.CMakeBuildNumber
   release/
-  vcpkg/
+  vcpkg/bin/
 )
 
 set(CPACK_VERBATIM_VARIABLES YES)
