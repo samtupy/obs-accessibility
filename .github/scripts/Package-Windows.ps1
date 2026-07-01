@@ -75,9 +75,8 @@ function Package {
 
         $env:PATH = "C:\Program Files (x86)\Inno Setup 6;$env:PATH"
 
-        Push-Location "${ProjectRoot}/release/${Configuration}"
-        Invoke-External ISCC.exe "/O${ProjectRoot}/release" "${ProjectRoot}/build_${Target}/install.iss"
-        Pop-Location
+        Copy-Item "${ProjectRoot}/build_${Target}/install.iss" "${ProjectRoot}/release/${Configuration}/install.iss"
+        Invoke-External ISCC.exe "/O${ProjectRoot}/release" "${ProjectRoot}/release/${Configuration}/install.iss"
 
         $InstallerSrc = "${ProjectRoot}/release/${ProductName}-${ProductVersion}.exe"
         $InstallerDst = "${ProjectRoot}/release/${OutputName}.exe"
