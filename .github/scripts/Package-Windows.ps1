@@ -47,8 +47,6 @@ function Package {
     $BuildSpec = Get-Content -Path ${BuildSpecFile} -Raw | ConvertFrom-Json
     $ProductName = $BuildSpec.name
     $ProductVersion = $BuildSpec.version
-    $ProductAuthor = $BuildSpec.author
-    $ProductWebsite = $BuildSpec.website
 
     $OutputName = "${ProductName}-${ProductVersion}-windows-${Target}"
 
@@ -75,30 +73,14 @@ function Package {
     if ( $Package ) {
         Log-Group "Building installer for ${ProductName}..."
 
-        $PackageDir = "${ProjectRoot}/release/Package/${ProductName}"
-        if ( Test-Path $PackageDir ) { Remove-Item -Recurse -Force $PackageDir }
-        New-Item -ItemType Directory -Force -Path $PackageDir | Out-Null
-
-        $CopyArgs = @{
-            Path = (Get-ChildItem -Path "${ProjectRoot}/release/${Configuration}" -Exclude "*.zip")
-            Destination = $PackageDir
-            Recurse = $true
-            Force = $true
-        }
-        Copy-Item @CopyArgs
-
-        $IssContent = Get-Content -Path "${ProjectRoot}/install.iss.in" -Raw
-        $IssContent = $IssContent -replace '@CMAKE_PROJECT_NAME@', $ProductName
-        $IssContent = $IssContent -replace '@CMAKE_PROJECT_VERSION@', $ProductVersion
-        $IssContent = $IssContent -replace '@PLUGIN_AUTHOR@', $ProductAuthor
-        $IssContent = $IssContent -replace '@PLUGIN_WEBSITE@', $ProductWebsite
-        Set-Content -Path "${ProjectRoot}/install.iss" -Value $IssContent
-
         $env:PATH = "C:\Program Files (x86)\Inno Setup 6;$env:PATH"
-        Invoke-External ISCC.exe "${ProjectRoot}/install.iss"
 
-        $InstallerSrc = "${ProjectRoot}/release/${ProductName}-${ProductVersion}-setup.exe"
-        $InstallerDst = "${ProjectRoot}/release/${OutputName}-setup.exe"
+        Push-Location "${ProjectRoot}/release/${Configuration}"
+        Invoke-External ISCC.exe "/O${ProjectRoot}/release" "${ProjectRoot}/build_${Target}/install.iss"
+        Pop-Location
+
+        $InstallerSrc = "${ProjectRoot}/release/${ProductName}-${ProductVersion}.exe"
+        $InstallerDst = "${ProjectRoot}/release/${OutputName}.exe"
         if ( Test-Path $InstallerSrc ) {
             Move-Item -Force $InstallerSrc $InstallerDst
         }

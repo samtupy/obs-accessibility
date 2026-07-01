@@ -12,8 +12,7 @@ AppPublisherURL={#PluginURL}
 AppSupportURL={#PluginURL}
 AppUpdatesURL={#PluginURL}
 DefaultDirName={commonappdata}\obs-studio\plugins\{#PluginName}
-OutputDir=release
-OutputBaseFilename={#PluginName}-{#PluginVersion}-setup
+OutputBaseFilename={#PluginName}-{#PluginVersion}
 Compression=lzma
 SolidCompression=yes
 DirExistsWarning=no
@@ -22,4 +21,4 @@ DirExistsWarning=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "release\Package\{#PluginName}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#PluginName}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
